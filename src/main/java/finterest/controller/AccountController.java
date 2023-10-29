@@ -74,9 +74,9 @@ public class AccountController {
         public List<TransactionsListDto> getAllTransactions() {
         List<Transaction> transactions = transactionService.getAll();
         List<TransactionsListDto> transactionsDto = transactions.stream()
-                .map(transaction -> new TransactionsListDto(transaction.getDate(), transaction.getAccount().getName(),
-                        transaction.getTransactionCategory().getCategory().name(), transaction.getNote(),
-                        transaction.getAmount())).collect(Collectors.toList());
+                .map(transaction -> new TransactionsListDto(transaction.getId(), transaction.getDate(),
+                        transaction.getAccount().getName(), transaction.getTransactionCategory().getCategory().name(),
+                        transaction.getNote(), transaction.getAmount())).collect(Collectors.toList());
         return transactionsDto;
     }
 
@@ -85,5 +85,19 @@ public class AccountController {
             Transaction transaction = requestDtoMapper.mapToModel(requestDto);
             transactionService.add(transaction);
             return ResponseEntity.ok("{\"message\": \"Transaction is successfully sent\"}");
+    }
+
+    @PostMapping("/edit-transaction")
+    public ResponseEntity<String> edit(@RequestBody TransactionRequestDto requestDto) {
+        Transaction transactionModel = requestDtoMapper.mapToModel(requestDto);
+        Transaction transaction = transactionService.get(requestDto.getId()).get();
+        transaction.setAccount(transactionModel.getAccount());
+        transaction.setTransactionCategory(transactionModel.getTransactionCategory());
+        transaction.setAmount(transactionModel.getAmount());
+        transaction.setCurrency(transactionModel.getCurrency());
+        transaction.setNote(transactionModel.getNote());
+        transaction.setDate(transactionModel.getDate());
+        transactionService.update(transaction);
+        return ResponseEntity.ok("{\"message\": \"Transaction is successfully sent\"}");
     }
 }

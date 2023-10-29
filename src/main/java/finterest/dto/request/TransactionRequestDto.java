@@ -4,12 +4,17 @@ import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public class TransactionRequestDto {
+    private Long id;
     private Long accountId;
     private Long categoryId;
     private BigDecimal amount;
     private String currency;
     private String note;
     private String date;
+
+    public Long getId() {
+        return id;
+    }
 
     public Long getAccountId() {
         return accountId;

@@ -4,6 +4,7 @@ package finterest.dto.response;
 import java.math.BigDecimal;
 
 public class TransactionsListDto {
+    private Long id;
     private String date;
     private String account;
     private String categoryName;
@@ -13,13 +14,22 @@ public class TransactionsListDto {
     public TransactionsListDto() {
     }
 
-    public TransactionsListDto(String date, String account, String categoryName,
+    public TransactionsListDto(Long transactionId, String date, String account, String categoryName,
                                String note, BigDecimal amount) {
+        this.id = transactionId;
         this.date = date;
         this.account = account;
         this.categoryName = categoryName;
         this.note = note;
         this.amount = amount;
+    }
+
+    public Long getTransactionId() {
+        return id;
+    }
+
+    public void setTransactionId(Long transactionId) {
+        this.id = transactionId;
     }
 
     public String getDate() {
