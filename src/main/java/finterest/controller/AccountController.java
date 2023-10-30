@@ -1,10 +1,12 @@
 package finterest.controller;
 
+import finterest.dto.request.AccountRequestDto;
 import finterest.dto.request.TransactionRequestDto;
 import finterest.dto.response.*;
 import finterest.model.Account;
 import finterest.model.Transaction;
 import finterest.model.TransactionCategory;
+import finterest.model.User;
 import finterest.service.AccountService;
 import finterest.service.TransactionCategoryService;
 import finterest.service.TransactionService;
@@ -17,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,7 +31,8 @@ public class AccountController {
     private final AccountService accountService;
     private final TransactionService transactionService;
     private final TransactionCategoryService transactionCategoryService;
-
+    private final RequestDtoMapper<AccountRequestDto, Account> accountRequestDtoMapper;
+    private final ResponseDtoMapper<AccountResponseDto, Account> accountResponseDtoMapper;
     private final RequestDtoMapper<TransactionRequestDto, Transaction> requestDtoMapper;
     private final ResponseDtoMapper<TransactionResponseDto, Transaction> responseDtoMapper;
 
@@ -37,6 +41,8 @@ public class AccountController {
                              UserNameProvider userNameProvider,
                              TransactionService transactionService,
                              TransactionCategoryService transactionCategoryService,
+                             RequestDtoMapper<AccountRequestDto, Account> accountRequestDtoMapper,
+                             ResponseDtoMapper<AccountResponseDto, Account> accountResponseDtoMapper,
                              RequestDtoMapper<TransactionRequestDto, Transaction> requestDtoMapper,
                              ResponseDtoMapper<TransactionResponseDto, Transaction> responseDtoMapper) {
         this.userService = userService;
@@ -44,6 +50,8 @@ public class AccountController {
         this.userNameProvider = userNameProvider;
         this.transactionService = transactionService;
         this.transactionCategoryService = transactionCategoryService;
+        this.accountRequestDtoMapper = accountRequestDtoMapper;
+        this.accountResponseDtoMapper = accountResponseDtoMapper;
         this.requestDtoMapper = requestDtoMapper;
         this.responseDtoMapper = responseDtoMapper;
     }
@@ -65,8 +73,8 @@ public class AccountController {
     public List<TransactionCategoryDto> getCategories() {
         List<TransactionCategory> categories = transactionCategoryService.getAll();
         List<TransactionCategoryDto> categoriesDtos = categories.stream()
-                .map(category -> new TransactionCategoryDto(category.getId(), category.getCategory().name()))
-                .collect(Collectors.toList());
+                .map(category -> new TransactionCategoryDto(category.getId(),
+                        category.getCategory().name())).toList();
         return categoriesDtos;
     }
 
@@ -77,7 +85,17 @@ public class AccountController {
                 .map(transaction -> new TransactionsListDto(transaction.getId(), transaction.getDate(),
                         transaction.getAccount().getName(), transaction.getTransactionCategory().getCategory().name(),
                         transaction.getNote(), transaction.getAmount())).collect(Collectors.toList());
+        Collections.reverse(transactionsDto);
         return transactionsDto;
+    }
+
+    @GetMapping("/accounts")
+    public List<AccountResponseDto> getAllAccounts() {
+        List<Account> allAccounts = accountService.getAll();
+        List<AccountResponseDto> accountsDto = allAccounts.stream().map(account ->
+                new AccountResponseDto(account.getId(), account.getName(),
+                account.getBalance())).toList();
+        return accountsDto;
     }
 
     @PostMapping("/add-transaction")
@@ -98,6 +116,22 @@ public class AccountController {
         transaction.setNote(transactionModel.getNote());
         transaction.setDate(transactionModel.getDate());
         transactionService.update(transaction);
-        return ResponseEntity.ok("{\"message\": \"Transaction is successfully sent\"}");
+        return ResponseEntity.ok("{\"message\": \"Transaction is successfully edited\"}");
+    }
+
+    @PostMapping("/delete-transaction/{id}")
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+        transactionService.delete(id);
+        return ResponseEntity.ok("{\"message\": \"Transaction is successfully deleted\"}");
+    }
+
+    @PostMapping("/create-account")
+    public ResponseEntity<String> createAccount(@RequestBody AccountRequestDto accountRequestDto) {
+        String username = userNameProvider.getUserName();
+        User user = userService.findByEmail(username).get();
+        Account account = new Account(accountRequestDto.getName(),
+        accountRequestDto.getBalance(), user);
+        accountService.add(account);
+        return ResponseEntity.ok("{\"message\": \"Account is successfully created\"}");
     }
 }
